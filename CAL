@@ -1,0 +1,101 @@
+#include <QApplication>
+#include <QWidget>
+#include <QGridLayout>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QString>
+
+class Calculator : public QWidget {
+    Q_OBJECT
+
+public:
+    Calculator(QWidget *parent = 0);
+
+private slots:
+            void buttonClicked();
+
+private:
+    QLineEdit *display;
+    double currentResult;
+    QString currentInput;
+    QString currentOperator;
+
+    void evaluate();
+};
+
+Calculator::Calculator(QWidget *parent)
+        : QWidget(parent), currentResult(0) {
+
+    display = new QLineEdit(this);
+    display->setAlignment(Qt::AlignRight);
+    display->setReadOnly(true);
+
+    QGridLayout *gridLayout = new QGridLayout(this);
+    gridLayout->addWidget(display, 0, 0, 1, 4);
+
+    const char *buttonText[4][4] = {
+            {"7", "8", "9", "/"},
+            {"4", "5", "6", "*"},
+            {"1", "2", "3", "-"},
+            {"0", ".", "=", "+"}
+    };
+
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            QPushButton *button = new QPushButton(buttonText[i][j], this);
+            connect(button, SIGNAL(clicked()), this, SLOT(buttonClicked()));
+            gridLayout->addWidget(button, i + 1, j);
+        }
+    }
+
+    setLayout(gridLayout);
+}
+
+void Calculator::buttonClicked() {
+    QPushButton *clickedButton = qobject_cast<QPushButton *>(sender());
+    QString buttonText = clickedButton->text();
+
+    if (buttonText == "=") {
+        evaluate();
+    } else {
+        currentInput += buttonText;
+        display->setText(currentInput);
+    }
+}
+
+void Calculator::evaluate() {
+    QString result;
+    double operand = currentInput.toDouble();
+
+    if (currentOperator == "+") {
+        currentResult += operand;
+    } else if (currentOperator == "-") {
+        currentResult -= operand;
+    } else if (currentOperator == "*") {
+        currentResult *= operand;
+    } else if (currentOperator == "/") {
+        if (operand != 0) {
+            currentResult /= operand;
+        } else {
+            display->setText("Error: Division by zero");
+            return;
+        }
+    } else {
+        currentResult = operand;
+    }
+
+    result.setNum(currentResult);
+    display->setText(result);
+    currentInput.clear();
+    currentOperator.clear();
+}
+
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+    Calculator calc;
+    calc.setWindowTitle("Simple Calculator");
+    calc.show();
+    return app.exec();
+}
+
+#include "main.moc"
